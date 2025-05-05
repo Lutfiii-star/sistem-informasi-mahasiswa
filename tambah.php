@@ -8,7 +8,7 @@
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: #f2f6fc;
+            background: #e8f0fe;
             margin: 0;
             padding: 0;
             color: #333;
@@ -20,27 +20,29 @@
             margin-top: 40px;
             font-size: 28px;
             font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         p {
             text-align: center;
-            color: #666;
+            color: #555;
             font-size: 16px;
             margin-bottom: 30px;
         }
 
         form {
             width: 90%;
-            max-width: 500px;
+            max-width: 520px;
             margin: auto;
             padding: 40px;
-            background-color: #ffffff;
-            border-radius: 14px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            background: linear-gradient(145deg, #ffffff, #e2e8f0);
+            border-radius: 16px;
+            box-shadow: 12px 12px 24px #c5cbd5, -12px -12px 24px #ffffff;
+            transition: 0.3s ease;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         label {
@@ -56,11 +58,12 @@
         textarea,
         select {
             width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #cfd8dc;
-            border-radius: 10px;
+            padding: 14px 18px;
+            border: 1px solid #ccc;
+            border-radius: 12px;
             font-size: 15px;
-            background-color: #f8fafc;
+            background: #f9fafe;
+            box-shadow: inset 2px 2px 6px #d1d9e6, inset -2px -2px 6px #ffffff;
             transition: 0.3s ease;
             box-sizing: border-box;
         }
@@ -71,44 +74,51 @@
             outline: none;
             border-color: #42a5f5;
             background-color: #ffffff;
+            box-shadow: inset 1px 1px 3px #ccc, inset -1px -1px 3px #ffffff;
         }
 
         select {
             appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg fill='gray' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg fill='gray' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 16px center;
             background-size: 16px;
             padding-right: 40px;
         }
 
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
         input[type="submit"],
         .btn-cancel {
-            background-color: #2196f3;
+            background: linear-gradient(145deg, #2196f3, #1e88e5);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 26px;
             font-size: 15px;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin-top: 25px;
-            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 4px 4px 10px #b0bec5, -4px -4px 10px #ffffff;
+            transform: scale(1);
             text-decoration: none;
+            text-align: center;
+            display: inline-block;
         }
 
-        input[type="submit"]:hover {
-            background-color: #1e88e5;
+        input[type="submit"]:hover,
+        .btn-cancel:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 6px 6px 14px #a0aeb7, -6px -6px 14px #ffffff;
         }
 
         .btn-cancel {
-            background-color: #cfd8dc;
-            color: #333;
-            margin-left: 12px;
-        }
-
-        .btn-cancel:hover {
-            background-color: #b0bec5;
+            background: linear-gradient(145deg, #757575, #616161);
+            color: white;
         }
 
         #npm-msg {
@@ -118,6 +128,10 @@
         }
 
         @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
             form {
                 padding: 30px 20px;
             }
@@ -128,10 +142,21 @@
                 font-size: 14px;
             }
 
+            select {
+                background-position: right 12px center;
+                background-size: 12px;
+                padding-right: 36px;
+            }
+
+            .button-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
             input[type="submit"],
             .btn-cancel {
-                font-size: 14px;
-                padding: 10px 20px;
+                width: 100%;
+                text-align: center;
             }
         }
     </style>
@@ -141,15 +166,16 @@
 
     <script>
         function cekNpm(npm) {
-            if (npm.length < 3) {
-                document.getElementById("npm-msg").innerText = "";
+            // Validasi NPM: Pastikan NPM memiliki panjang 9 digit
+            if (npm.length !== 9) {
+                document.getElementById("npm-msg").innerText = "NPM harus terdiri dari 9 digit.";
                 return;
             }
 
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "cek_npm.php", true);
             xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhr.onreadystatechange = function() {
+            xhr.onreadystatechange = function () {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     document.getElementById("npm-msg").innerText = xhr.responseText;
                 }
@@ -167,11 +193,12 @@
         <div class="form-group">
             <label for="npm">NPM:</label>
             <input type="text" name="npm" id="npm" required
-                   inputmode="numeric"
-                   pattern="\d{9}"
-                   maxlength="9"
-                   onkeypress="return event.charCode >= 48 && event.charCode <= 57"
-                   onkeyup="cekNpm(this.value)">
+                inputmode="numeric"
+                pattern="\d{9}"
+                maxlength="9"
+                onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                onkeyup="cekNpm(this.value)"
+                title="NPM harus terdiri dari 9 digit angka.">
             <div id="npm-msg"></div>
         </div>
 
@@ -200,7 +227,7 @@
             <textarea name="alamat" id="alamat" rows="3" required></textarea>
         </div>
 
-        <div style="text-align: center; margin-top: 20px;">
+        <div class="button-container">
             <input type="submit" name="submit" value="Simpan Data">
             <a href="index.php" class="btn-cancel">Batal</a>
         </div>
@@ -214,7 +241,7 @@
         $email = $_POST['email'];
         $alamat = $_POST['alamat'];
 
-        // Validasi NPM harus 9 digit angka
+        // Validasi NPM di server
         if (!preg_match('/^\d{9}$/', $npm)) {
             echo "<script>
             Swal.fire({
@@ -229,6 +256,7 @@
 
         include "koneksi.php";
 
+        // Cek apakah NPM sudah terdaftar
         $cek_npm = mysqli_prepare($conn, "SELECT npm FROM tbl_mahasiswa WHERE npm = ?");
         mysqli_stmt_bind_param($cek_npm, "s", $npm);
         mysqli_stmt_execute($cek_npm);
