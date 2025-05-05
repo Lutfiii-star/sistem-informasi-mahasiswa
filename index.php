@@ -1,3 +1,30 @@
+<?php
+// index.php
+
+include "koneksi.php";
+
+// Konfigurasi pagination
+$limit = 5;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+// Pencarian
+$search = "";
+if (isset($_GET['cari']) && $_GET['cari'] != "") {
+    $search = mysqli_real_escape_string($conn, $_GET['cari']);
+    $sql = "SELECT * FROM tbl_mahasiswa WHERE npm LIKE '%$search%' OR nama LIKE '%$search%' ORDER BY nama ASC LIMIT $offset, $limit";
+    $count_sql = "SELECT COUNT(*) FROM tbl_mahasiswa WHERE npm LIKE '%$search%' OR nama LIKE '%$search%'";
+} else {
+    $sql = "SELECT * FROM tbl_mahasiswa ORDER BY nama ASC LIMIT $offset, $limit";
+    $count_sql = "SELECT COUNT(*) FROM tbl_mahasiswa";
+}
+
+$query = mysqli_query($conn, $sql);
+$total_query = mysqli_query($conn, $count_sql);
+$total_data = mysqli_fetch_row($total_query)[0];
+$total_pages = ceil($total_data / $limit);
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -5,143 +32,130 @@
     <meta charset="UTF-8">
     <title>Sistem Informasi Mahasiswa</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #e3f2fd, #bbdefb);
             margin: 0;
             padding: 0;
-            color: #333;
+            color: #0d47a1;
         }
 
-        h1 {
+        h1,
+        h2 {
             text-align: center;
-            color: #003366;
-            margin: 30px 0 10px;
-            font-size: 40px;
+            margin-top: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 50, 0.3);
         }
 
         .top-bar {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            margin-bottom: 20px;
             flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(145deg, #2196f3, #1e88e5);
+            padding: 15px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: white;
+            border-radius: 0 0 10px 10px;
         }
 
         .nav-left {
-            margin-right: 20px;
+            display: flex;
+            gap: 10px;
         }
 
-        .nav-left a.button {
-            text-decoration: none;
+        .button {
+            background: linear-gradient(to right, #42a5f5, #1e88e5);
             color: white;
-            background-color: #3498db;
-            padding: 10px 18px;
-            margin-right: 10px;
+            padding: 10px 15px;
+            border: none;
             border-radius: 8px;
-            font-size: 15px;
+            text-decoration: none;
             font-weight: bold;
-            display: inline-block;
-            transition: 0.3s;
+            box-shadow: 0 4px 0 #1565c0;
+            transition: all 0.2s ease;
         }
 
-        .nav-left a.button:hover {
-            background-color: #2980b9;
+        .button:hover {
+            background: #1976d2;
+            box-shadow: 0 2px 0 #0d47a1;
+        }
+
+        .search-box {
+            margin-top: 10px;
         }
 
         .search-container {
-            position: relative;
             display: flex;
-            justify-content: flex-end;
         }
 
-        .search-container input[type="text"] {
-            padding: 10px 40px 10px 14px;
-            width: 250px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 14px;
+        .search-container input {
+            padding: 8px;
+            border: 1px solid #90caf9;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+            width: 200px;
         }
 
         .search-container button {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
+            padding: 8px;
+            background-color: #1565c0;
+            color: white;
             border: none;
-            color: #555;
-            font-size: 16px;
+            border-radius: 0 5px 5px 0;
             cursor: pointer;
         }
 
-        .search-container button:active {
-            transform: scale(1.2); /* Enlarge button on click */
+        .desktop-table {
+            overflow-x: auto;
+            margin: 20px auto;
+            width: 95%;
+            display: block;
         }
 
         table {
-            width: 90%;
-            margin: 20px auto;
             border-collapse: collapse;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #ccc;
+            width: 100%;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
         }
 
-        th,
-        td {
-            padding: 14px;
-            text-align: center;
-            font-size: 15px;
-            border: 1px solid #ccc;
+        table th,
+        table td {
+            padding: 12px;
+            border: 1px solid #bbdefb;
+            text-align: left;
         }
 
-        th {
-            background-color: #3498db;
+        table th {
+            background: linear-gradient(to right, #64b5f6, #2196f3);
             color: white;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        tr:hover {
-            background-color: #ecf0f1;
         }
 
         .aksi a {
-            margin: 0 5px;
-            padding: 8px 14px;
-            border-radius: 6px;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
             text-decoration: none;
+            margin-right: 10px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
         }
 
-        .edit {
-            background-color: #2ecc71;
+        .aksi .edit {
+            background-color: #1976d2;
+            color: white;
+            box-shadow: 0 2px 4px rgba(25, 118, 210, 0.4);
         }
 
-        .edit:hover {
-            background-color: #27ae60;
-        }
-
-        .hapus {
-            background-color: #e74c3c;
-        }
-
-        .hapus:hover {
-            background-color: #c0392b;
+        .aksi .hapus {
+            background-color: #d32f2f;
+            color: white;
+            box-shadow: 0 2px 4px rgba(211, 47, 47, 0.4);
         }
 
         .pagination {
@@ -150,27 +164,17 @@
         }
 
         .pagination a {
+            padding: 8px 14px;
+            margin: 0 5px;
+            background-color: #1e88e5;
+            color: white;
             text-decoration: none;
-            color: #3498db;
-            border: 1px solid #3498db;
-            padding: 6px 12px;
-            margin: 0 4px;
-            border-radius: 4px;
-            font-weight: bold;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 100, 0.2);
         }
 
         .pagination a.active {
-            background-color: #3498db;
-            color: white;
-        }
-
-        .pagination a:hover {
-            background-color: #2980b9;
-            color: white;
-        }
-
-        .desktop-table {
-            display: block;
+            background-color: #0d47a1;
         }
 
         .mobile-list {
@@ -179,66 +183,55 @@
 
         .card {
             background-color: white;
-            margin: 10px auto;
-            padding: 12px;
-            width: 90%;
             border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            border: 1px solid #ddd;
+            margin: 10px auto;
+            padding: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            transition: transform 0.2s ease;
             cursor: pointer;
         }
 
+        .card:hover {
+            transform: scale(1.02);
+        }
+
         .card-header {
-            font-size: 16px;
-            color: #2c3e50;
             font-weight: bold;
+            color: #0d47a1;
         }
 
         .card-body {
-            margin-top: 10px;
             display: none;
+            margin-top: 10px;
             font-size: 14px;
-            color: #333;
         }
 
         .card.open .card-body {
             display: block;
         }
 
-        .card-header::before {
-            content: attr(data-index);
-            font-weight: bold;
-            color: #3498db;
+        .card .aksi {
+            margin-top: 10px;
+        }
+
+        .card .aksi a {
+            display: inline-block;
             margin-right: 10px;
-        }
-
-        .aksi {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .aksi a {
-            padding: 6px 12px;
+            padding: 6px 10px;
+            border-radius: 4px;
             font-size: 14px;
-            text-align: center;
-            width: 45%;
-            border-radius: 6px;
+            text-decoration: none;
         }
 
-        .edit {
-            background-color: #2ecc71;
+        .card .edit {
+            background-color: #2196f3;
+            color: white;
         }
 
-        .edit:hover {
-            background-color: #27ae60;
-        }
-
-        .hapus {
-            background-color: #e74c3c;
-        }
-
-        .hapus:hover {
-            background-color: #c0392b;
+        .card .hapus {
+            background-color: #e53935;
+            color: white;
         }
 
         @media (max-width: 768px) {
@@ -252,76 +245,21 @@
 
             .top-bar {
                 flex-direction: column;
-                text-align: center;
+                align-items: stretch;
+                gap: 10px;
             }
 
             .nav-left {
-                margin: 10px 0;
+                justify-content: center;
+                flex-wrap: wrap;
             }
 
-            .nav-left .button {
-                margin: 5px;
-            }
-
-            .search-container {
-                position: relative;
+            .search-container input {
                 width: 100%;
-            }
-
-            .search-container input[type="text"] {
-                width: 80%;
-                padding: 10px;
-                margin-bottom: 10px;
-                border-radius: 8px;
-                border: 1px solid #ccc;
-                font-size: 14px;
-            }
-
-            .search-container button {
-                position: absolute;
-                right: 10px;
-                top: 50%;
-                transform: translateY(-50%);
-                background: none;
-                border: none;
-                color: #555;
-                font-size: 16px;
-                cursor: pointer;
-            }
-
-            .search-container button:active {
-                transform: scale(1.2);
-            }
-
-            .card {
-                margin: 15px auto;
-                padding: 12px;
-                width: 90%;
-            }
-
-            .card-header {
-                font-size: 18px;
-                color: #2c3e50;
-                font-weight: bold;
-            }
-
-            .card-body {
-                font-size: 14px;
-                color: #333;
-                margin-top: 10px;
-            }
-
-            .aksi a {
-                padding: 6px 12px;
-                font-size: 14px;
-                width: 48%;
-            }
-
-            .pagination a {
-                padding: 6px 12px;
             }
         }
     </style>
+
 
     <script>
         function konfirmasiHapus(npm) {
@@ -355,7 +293,6 @@
             <a class="button" href="index.php"><i class="fa fa-home"></i> Home</a>
             <a class="button" href="tambah.php"><i class="fa fa-plus"></i> Tambah Mahasiswa</a>
         </div>
-
         <form method="GET" class="search-box">
             <div class="search-container">
                 <input type="text" name="cari" placeholder="Cari NPM/Nama..." value="<?= isset($_GET['cari']) ? htmlspecialchars($_GET['cari']) : '' ?>">
@@ -364,24 +301,7 @@
         </form>
     </div>
 
-    <?php
-    include "koneksi.php";
-    $limit = 5;
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-    $offset = ($page - 1) * $limit;
-
-    $search = "";
-    if (isset($_GET['cari']) && $_GET['cari'] != "") {
-        $search = mysqli_real_escape_string($conn, $_GET['cari']);
-        $sql = "SELECT * FROM tbl_mahasiswa WHERE npm LIKE '%$search%' OR nama LIKE '%$search%' ORDER BY nama ASC LIMIT $offset, $limit";
-        $count_sql = "SELECT COUNT(*) FROM tbl_mahasiswa WHERE npm LIKE '%$search%' OR nama LIKE '%$search%'";
-    } else {
-        $sql = "SELECT * FROM tbl_mahasiswa ORDER BY nama ASC LIMIT $offset, $limit";
-        $count_sql = "SELECT COUNT(*) FROM tbl_mahasiswa";
-    }
-
-    $query = mysqli_query($conn, $sql);
-    ?>
+    <h2 style="text-align: center; color: #2c3e50;">Data Mahasiswa</h2>
 
     <div class="desktop-table">
         <table>
@@ -400,9 +320,10 @@
                 <?php
                 $no = $offset + 1;
                 while ($data = mysqli_fetch_array($query)) {
+                    $npm = str_pad($data['npm'], 9, '0', STR_PAD_LEFT);
                     echo "<tr>
                             <td>$no</td>
-                            <td>{$data['npm']}</td>
+                            <td>$npm</td>
                             <td>{$data['nama']}</td>
                             <td>{$data['prodi']}</td>
                             <td>{$data['email']}</td>
@@ -424,9 +345,10 @@
         mysqli_data_seek($query, 0);
         $no = $offset + 1;
         while ($data = mysqli_fetch_array($query)) {
+            $npm = str_pad($data['npm'], 9, '0', STR_PAD_LEFT);
             echo "<div class='card' onclick=\"toggleDetail(this)\">
                     <div class='card-header' data-index='$no'>
-                        <strong>{$data['npm']}</strong><br>{$data['nama']}
+                        <strong>$npm</strong><br>{$data['nama']}
                     </div>
                     <div class='card-body'>
                         <p><strong>Prodi:</strong> {$data['prodi']}</p>
@@ -445,10 +367,6 @@
 
     <div class="pagination">
         <?php
-        $total_query = mysqli_query($conn, $count_sql);
-        $total_data = mysqli_fetch_row($total_query)[0];
-        $total_pages = ceil($total_data / $limit);
-
         for ($i = 1; $i <= $total_pages; $i++) {
             $active = ($i == $page) ? "active" : "";
             $search_param = $search ? "&cari=" . urlencode($search) : "";
@@ -476,7 +394,6 @@
             });
         </script>
     <?php endif; ?>
-
 </body>
 
 </html>
